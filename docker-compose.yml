@@ -1,0 +1,84 @@
+# Use root/example as user/password credentials
+version: '3.1'
+
+services:
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - 27017:27017
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_BASICAUTH_ENABLED: true
+      ME_CONFIG_BASICAUTH_USERNAME: mongoexpressuser
+      ME_CONFIG_BASICAUTH_PASSWORD: mongoexpresspass
+
+  db:
+    image: mysql
+    container_name: mydb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: testdb
+      MYSQL_PASSWORD: example
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  # db2:
+  #   image: mysql
+  #   container_name: mydb2
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: example
+  #     MYSQL_DATABASE: testdb
+  #     MYSQL_PASSWORD: example
+  #   ports:
+  #     - 3307:3306
+  #   volumes:
+  #     - mysql-data2:/var/lib/mysql
+
+  # navicat
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    volumes:
+      - redis_volume_data:/data
+    ports:
+      - 6379:6379
+  # redis web 管理访问页面
+  redis_insight:
+    image: redislabs/redisinsight:latest
+    container_name: redis_insight
+    restart: always
+    ports:
+      - 5540:5540
+    volumes:
+      - redisinsight:/data
+    depends_on:
+      - redis
+# 在顶层声明这个卷
+volumes:
+  # 是一个命名卷，Docker 会管理它
+  redis_volume_data:
+  redisinsight:
+  mysql-data:
+  # mysql-data2:
