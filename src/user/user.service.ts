@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import argon2 from 'argon2';
 
 @Injectable()
 export class UserService {
@@ -17,7 +18,11 @@ export class UserService {
   // }
 
   async create(user: User): Promise<User> {
-    return this.userRepository.save(user);
+    const { password, ...rest } = user;
+    return this.userRepository.save({
+      ...rest,
+      password: await argon2.hash(password),
+    });
   }
 
   findAll(): Promise<User[]> {

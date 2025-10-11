@@ -26,6 +26,12 @@ async function bootstrap() {
     }),
   );
 
+  // 全局守卫，无法使用 userservice 类来注入实例。
+  // app.useGlobalGuards();
+
+  // 全局拦截器
+  // app.useGlobalInterceptors(new SerializeInterceptor());
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap().catch((err) => console.log(err));
