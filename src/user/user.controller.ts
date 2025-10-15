@@ -1,9 +1,11 @@
 import {
+  Body,
   Controller,
   Get,
   HttpException,
   Optional,
   ParseIntPipe,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -13,10 +15,21 @@ import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { JwtGuard } from 'src/common/guards/jwt.guard';
 import { Public } from 'src/common/decorators/public.decorator';
+import { RolePermissionGuard } from 'src/common/guards/role-permission.guard';
+import {
+  RolePermission,
+  Read,
+  Update,
+} from 'src/common/decorators/role-permission.decorator';
+import { CreateUserDto } from './dto/create-user.dto';
+import { PublicUserDto } from 'src/auth/dto/public-user.dto';
+import { Serialize } from 'src/common/decorators/serialize.decorator';
 
 @Controller('user')
 // @UseGuards(AuthGuard('jwt'), AdminGuard)  // 控制器守卫，对所有路由生效
-@UseGuards(JwtGuard)
+@UseGuards(JwtGuard, RolePermissionGuard)
+@RolePermission('user')
+@RolePermission('admin')
 export class UserController {
   constructor(
     @Optional() private readonly userService: UserService,
@@ -45,5 +58,20 @@ export class UserController {
   // @UseGuards(AuthGuard('jwt'))
   test() {
     return 'ok';
+  }
+
+  @Get('/role')
+  // read，update 权限
+  @Read()
+  @Update()
+  role() {
+    return 'ok';
+  }
+
+  // ----------------------
+  @Post('/create')
+  @Serialize(PublicUserDto) // 将返回值转换为该类的实例 (避免某些重要数据返回)
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.userService.createUser(createUserDto);
   }
 }

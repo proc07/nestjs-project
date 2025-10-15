@@ -16,14 +16,14 @@ export class AppController {
   constructor(
     @InjectRedis() private readonly redis: Redis,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    // private prisma: PrismaService,
+    private prisma: PrismaService,
     private userService: UserService,
   ) {}
 
   // @Get('/prisma/users')
-  // async users(): Promise<UserPrisma[]> {
-  //   return await this.prisma.user.findMany({});
-  // }
+  async users(): Promise<UserPrisma[]> {
+    return await this.prisma.user.findMany({});
+  }
 
   @Get('/typeorm/users')
   async usersAll(): Promise<UserTypeOrm[] | null> {

@@ -6,7 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  // output   = "../generated/prisma"
+  // output   = "./client/mysql"
 }
 
 datasource db {
@@ -18,18 +18,72 @@ datasource db {
 // 每次创建新的 model 时，都需要运行 prisma db push 命令，才能同步到数据库
 // prisma generate 命令，会根据 schema.prisma 生成 prisma client 代码 （提供的一个用于操作数据库的客户端库）
 
+// npx prisma migrate dev --name initial-migration
+
+// 将数据库重置为与迁移历史完全同步的初始状态
+// npx prisma migrate reset
+// 标记已应用的迁移为已解决，避免在后续迁移中重复应用
+// npx prisma migrate resolve --applied 20251012000005_role
+
 model User {
-  id    Int     @default(autoincrement()) @id
-  email String  @unique
-  name  String?
-  posts Post[]
+  id       Int     @default(autoincrement()) @id
+  username String  @unique
+  password String
+
+  // 添加与 UserRole 的反向关系：一个用户可以关联多个 UserRole（即多个角色）
+  Roles    UserRole[]
+
+  @@map("users")
 }
 
-model Post {
-  id        Int      @default(autoincrement()) @id
-  title     String
-  content   String?
-  published Boolean? @default(false)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
+model Role {
+  id       Int       @default(autoincrement()) @id
+  name     String    @unique
+  description   String?
+  // 角色关联的用户
+  Users    UserRole[]
+  // 角色关联的权限
+  RolePermissions RolePermissions[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId Int
+  roleId Int
+
+  role Role @relation(fields: [roleId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  
+  // 联合主键
+  @@id([userId, roleId])
+
+  // 表格名称
+  @@map("user_roles")
+}
+
+model Permission {
+  id       Int       @default(autoincrement()) @id
+  // ControllerName+RouteName 如：user:create
+  name     String    @unique
+  action   String    // 权限操作，如：read、write、delete 等
+  description   String?
+
+  RolePermissions RolePermissions[]
+
+  @@map("permissions")
+}
+
+model RolePermissions {
+  roleId Int
+  permissionId Int
+  // 角色关联的权限
+  role        Role       @relation(fields: [roleId], references: [id])
+  permission  Permission @relation(fields: [permissionId], references: [id])
+
+  // 联合主键
+  @@id([roleId, permissionId])
+
+  // 表格名称
+  @@map("role_permissions")
 }

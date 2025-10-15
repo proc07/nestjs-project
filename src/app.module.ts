@@ -10,12 +10,14 @@ import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { User } from './user/user.entity';
 import { MongooseModule } from '@nestjs/mongoose';
+import { RoleModule } from './role/role.module';
+import { PermissionModule } from './permission/permission.module';
 
 const envFilePath = `.env.${process.env.NODE_ENV || 'development'}`;
 
 @Module({
   imports: [
-    // PrismaModule,
+    PrismaModule,
     TypeOrmModule.forRootAsync({
       name: 'mysql',
       imports: [ConfigModule],
@@ -72,6 +74,8 @@ const envFilePath = `.env.${process.env.NODE_ENV || 'development'}`;
     UserModule,
     LogsModule,
     AuthModule,
+    RoleModule,
+    PermissionModule,
   ],
   controllers: [AppController],
   providers: [],
