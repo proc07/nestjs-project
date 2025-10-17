@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CreateRoleDto } from './dto/create-role.dto';
+import { CreateRoleDto, PermissionType } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { Role as RolePrisma } from '@prisma/client';
 import { PrismaService } from 'src/database/prisma/prisma.service';
@@ -11,7 +11,7 @@ export class RoleService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async create(createRoleDto: CreateRoleDto): Promise<RolePrisma> {
+  async create(createRoleDto: CreateRoleDto) {
     return await this.prisma.$transaction(async (prisma) => {
       const { permissions, ...restData } = createRoleDto;
       // role -> role_permissions -> permission 表
@@ -49,6 +49,26 @@ export class RoleService {
     return await this.prisma.role.findUnique({
       where: {
         id,
+      },
+      // 关联查询角色关联的权限
+      include: {
+        RolePermissions: {
+          include: {
+            permission: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findAllByIds(ids: number[]) {
+    return await this.prisma.role.findMany({
+      where: {
+        id: {
+          // (批量查询已知 ID 的记录) in 是一个过滤条件操作符，用于匹配「字段值存在于指定数组中」的记录
+          // 补充：反向操作 notIn
+          in: ids,
+        },
       },
       // 关联查询角色关联的权限
       include: {

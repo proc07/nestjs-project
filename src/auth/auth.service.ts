@@ -29,6 +29,7 @@ export class AuthService {
     };
   }
 
+  // typeorm
   async signUp(username: string, password: string) {
     // 检查用户名是否已存在
     const existingUser = await this.userService.findOneByUser(username);

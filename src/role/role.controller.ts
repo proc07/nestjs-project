@@ -12,6 +12,8 @@ import {
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { PublicRoleDto } from './dto/public-role.dto';
+import { Serialize } from 'src/common/decorators/serialize.decorator';
 
 @Controller('role')
 export class RoleController {
@@ -31,6 +33,7 @@ export class RoleController {
   }
 
   @Get(':id')
+  @Serialize(PublicRoleDto)
   findOne(@Param('id') id: string) {
     return this.roleService.findOne(+id);
   }

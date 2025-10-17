@@ -1,10 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   Optional,
+  Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -22,14 +25,16 @@ import {
   Update,
 } from 'src/common/decorators/role-permission.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
-import { PublicUserDto } from 'src/auth/dto/public-user.dto';
+import { PublicUserDto } from './dto/public-user.dto';
 import { Serialize } from 'src/common/decorators/serialize.decorator';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { PublicUpdateUserDto } from './dto/public-update-user.dto';
 
 @Controller('user')
 // @UseGuards(AuthGuard('jwt'), AdminGuard)  // 控制器守卫，对所有路由生效
-@UseGuards(JwtGuard, RolePermissionGuard)
+// @UseGuards(JwtGuard, RolePermissionGuard)
+@UseGuards(AuthGuard('jwt'), RolePermissionGuard)
 @RolePermission('user')
-@RolePermission('admin')
 export class UserController {
   constructor(
     @Optional() private readonly userService: UserService,
@@ -73,5 +78,31 @@ export class UserController {
   @Serialize(PublicUserDto) // 将返回值转换为该类的实例 (避免某些重要数据返回)
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.createUser(createUserDto);
+  }
+
+  @Get()
+  @Read()
+  findAll(
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+  ) {
+    return this.userService.findUserAll(page, limit);
+  }
+
+  @Get(':username')
+  @Serialize(PublicUserDto)
+  async findOne(@Param('username') username: string) {
+    return await this.userService.findUserOne(username);
+  }
+
+  @Patch()
+  @Serialize(PublicUpdateUserDto)
+  async update(@Body() updateUserDto: UpdateUserDto) {
+    return await this.userService.updateUser(updateUserDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.userService.removeUser(id);
   }
 }

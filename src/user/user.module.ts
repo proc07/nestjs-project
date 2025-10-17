@@ -1,10 +1,12 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { PrismaModule } from 'src/database/prisma/prisma.module';
+import { RoleModule } from 'src/role/role.module';
 
+@Global()
 @Module({
   controllers: [UserController],
   providers: [UserService],
@@ -15,6 +17,7 @@ import { PrismaModule } from 'src/database/prisma/prisma.module';
     // TypeOrmModule.forFeature([User], 'mysql2'),
 
     PrismaModule,
+    RoleModule,
   ],
   exports: [UserService],
 })
