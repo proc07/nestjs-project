@@ -32,26 +32,26 @@ export class RolePermissionGuard implements CanActivate {
       : handlerPermission;
 
     const rights = `${cls}:${handler}`;
-    console.log('rights', rights);
+    console.log('role-permission.guard: rights', rights);
 
     // this.userService
     const req = context.switchToHttp().getRequest<Request>();
     const { username } = (req as any).user as User;
 
     const user = await this.userService.findUserOne(username);
-    console.log('user', user);
+    console.log('role-permission.guard: user', user);
     if (!user) {
       return false;
     }
-    const permissions = await this.roleService.findAllByIds(
+    const rolesData = await this.roleService.findAllByIds(
       user.Roles.map((role) => role.roleId),
     );
-    // console.log('permissions', permissions);
+    console.log('role-permission.guard: role', rolesData);
 
-    const rolePermissions = permissions
+    const rolePermissions = rolesData
       .map((role) => role.RolePermissions.map((r) => r.permission.name))
       .flat();
-    console.log('rolePermissions', rolePermissions);
+    console.log('role-permission.guard: permission', rolePermissions);
     return rolePermissions.includes(rights);
   }
 }

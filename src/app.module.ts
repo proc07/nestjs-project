@@ -12,6 +12,8 @@ import { User } from './user/user.entity';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RoleModule } from './role/role.module';
 import { PermissionModule } from './permission/permission.module';
+import { PolicyModule } from './policy/policy.module';
+import { SharedModule } from './modules/shared/shared.module';
 
 const envFilePath = `.env.${process.env.NODE_ENV || 'development'}`;
 
@@ -76,6 +78,8 @@ const envFilePath = `.env.${process.env.NODE_ENV || 'development'}`;
     AuthModule,
     RoleModule,
     PermissionModule,
+    PolicyModule,
+    SharedModule,
   ],
   controllers: [AppController],
   providers: [],

@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
+import { Serialize } from 'src/common/decorators/serialize.decorator';
+import { PublicUpdatePermissionDto } from './dto/public-update-permission.dto';
 
 @Controller('permission')
 export class PermissionController {
@@ -23,7 +33,11 @@ export class PermissionController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePermissionDto: UpdatePermissionDto) {
+  @Serialize(PublicUpdatePermissionDto)
+  update(
+    @Param('id') id: string,
+    @Body() updatePermissionDto: UpdatePermissionDto,
+  ) {
     return this.permissionService.update(+id, updatePermissionDto);
   }
 

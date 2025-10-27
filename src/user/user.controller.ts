@@ -29,11 +29,12 @@ import { PublicUserDto } from './dto/public-user.dto';
 import { Serialize } from 'src/common/decorators/serialize.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PublicUpdateUserDto } from './dto/public-update-user.dto';
+import { PolicyGuard } from 'src/common/guards/policy.guard';
 
 @Controller('user')
 // @UseGuards(AuthGuard('jwt'), AdminGuard)  // 控制器守卫，对所有路由生效
 // @UseGuards(JwtGuard, RolePermissionGuard)
-@UseGuards(AuthGuard('jwt'), RolePermissionGuard)
+@UseGuards(AuthGuard('jwt'), RolePermissionGuard, PolicyGuard)
 @RolePermission('user')
 export class UserController {
   constructor(

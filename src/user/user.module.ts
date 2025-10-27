@@ -5,6 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { PrismaModule } from 'src/database/prisma/prisma.module';
 import { RoleModule } from 'src/role/role.module';
+import { PermissionModule } from 'src/permission/permission.module';
+import { PolicyModule } from 'src/policy/policy.module';
 
 @Global()
 @Module({
@@ -18,6 +20,8 @@ import { RoleModule } from 'src/role/role.module';
 
     PrismaModule,
     RoleModule,
+    PolicyModule,
+    PermissionModule,
   ],
   exports: [UserService],
 })

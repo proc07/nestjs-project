@@ -1,6 +1,7 @@
 import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, IsArray } from 'class-validator';
 import { CreatePermissionDto } from 'src/permission/dto/create-permission.dto';
+import { CreatePolicyDto } from 'src/policy/dto/create-policy.dto';
 
 export interface PermissionType {
   id?: number;
@@ -12,11 +13,11 @@ export interface PermissionType {
 abstract class Permission {
   abstract type: string;
 }
-class StringPermission extends Permission {
+export class StringPermission extends Permission {
   type = 'string';
   value: string;
 }
-class DetailedPermission extends Permission {
+export class DetailedPermission extends Permission {
   type = 'detailed';
   name: string;
   value: PermissionType;
@@ -65,5 +66,11 @@ export class CreateRoleDto {
     });
   })
   // 当传递为 object[] -> 直接转换为 dto
-  permissions: PermissionType[] | string[];
+  permissions: PermissionType[]; //  | string[];
+
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @Type(() => CreatePolicyDto)
+  policies: CreatePolicyDto[];
 }

@@ -3,6 +3,7 @@ import { CreateRoleDto, PermissionType } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { Role as RolePrisma } from '@prisma/client';
 import { PrismaService } from 'src/database/prisma/prisma.service';
+import { CreatePolicyDto } from 'src/policy/dto/create-policy.dto';
 
 @Injectable()
 export class RoleService {
@@ -13,26 +14,60 @@ export class RoleService {
 
   async create(createRoleDto: CreateRoleDto) {
     return await this.prisma.$transaction(async (prisma) => {
-      const { permissions, ...restData } = createRoleDto;
+      const { permissions, policies = [], ...restData } = createRoleDto;
+
+      const rolePermissions = {
+        create: permissions.map((permission) => ({
+          permission: {
+            // 先去查询是否存在该 name 权限，不存在则创建
+            connectOrCreate: {
+              where: {
+                name: permission.name,
+              },
+              create: {
+                ...permission,
+              },
+            },
+          },
+        })),
+      };
+
+      const rolePolicies = {
+        create: policies.map((policy: CreatePolicyDto & { encode: string }) => {
+          let whereCond: { id: number } | { encode: string };
+
+          if (policy.id) {
+            whereCond = {
+              id: policy.id,
+            };
+          } else {
+            const encode = Buffer.from(JSON.stringify(policy)).toString(
+              'base64',
+            );
+            whereCond = { encode };
+            policy.encode = encode;
+          }
+
+          return {
+            policy: {
+              connectOrCreate: {
+                where: whereCond,
+                create: {
+                  ...policy,
+                },
+              },
+            },
+          };
+        }),
+      };
+
       // role -> role_permissions -> permission 表
       return prisma.role.create({
         data: {
           ...restData,
-          RolePermissions: {
-            create: permissions.map((permission) => ({
-              permission: {
-                // 先去查询是否存在该 name 权限，不存在则创建
-                connectOrCreate: {
-                  where: {
-                    name: permission.name,
-                  },
-                  create: {
-                    ...permission,
-                  },
-                },
-              },
-            })),
-          },
+          RolePermissions: rolePermissions,
+          // warn: 不能将类型“{ create: { policy: { connectOrCreate: { where: Record<string, any>; create: { id?: number; type: null; effect: "can" | "cannot"; action: string; subject: string; fields?: FeildType; conditions?: FeildType; args?: FeildType; }; }; }; }[]; }”分配给类型“RolePolicyUncheckedCreateNestedManyWithoutRoleInput | RolePolicyCreateNestedManyWithoutRoleInput | undefined”。
+          RolePolicies: rolePolicies,
         },
       });
     });
@@ -77,16 +112,100 @@ export class RoleService {
             permission: true,
           },
         },
+        RolePolicies: {
+          include: {
+            policy: true,
+          },
+        },
       },
     });
   }
 
   async update(id: number, updateRoleDto: UpdateRoleDto): Promise<RolePrisma> {
-    return await this.prisma.role.update({
-      where: {
-        id,
-      },
-      data: updateRoleDto,
+    return await this.prisma.$transaction(async (prisma) => {
+      const { permissions = [], policies = [], ...restData } = updateRoleDto;
+      const data: Record<string, any> = {};
+
+      if (permissions.length) {
+        data.RolePermissions = {
+          deleteMany: {},
+          create: permissions.map((permission) => ({
+            permission: {
+              // 先去查询是否存在该 name 权限，不存在则创建
+              connectOrCreate: {
+                where: {
+                  name: permission.name,
+                },
+                create: {
+                  ...permission,
+                },
+              },
+            },
+          })),
+        };
+      }
+
+      if (policies.length) {
+        const createArr: Record<string, any> = [];
+        for (let i = 0; i < policies.length; i++) {
+          const policy = policies[i];
+
+          let whereCond: { id: number } | { encode: string };
+          let policyData = policy;
+
+          if (policy.id) {
+            whereCond = {
+              id: policy.id,
+            };
+            // @ts-ignore
+            policyData = await this.prisma.policy.findUnique({
+              where: {
+                id: policy.id,
+              },
+            });
+          } else {
+            const encode = Buffer.from(JSON.stringify(policy)).toString(
+              'base64',
+            );
+            whereCond = { encode };
+            console.log('encode', encode);
+            // @ts-ignore
+            policy.encode = encode;
+            // @ts-ignore
+            policyData = policy;
+          }
+
+          createArr.push({
+            policy: {
+              connectOrCreate: {
+                where: whereCond,
+                create: {
+                  ...policyData,
+                },
+              },
+            },
+          });
+        }
+        data.RolePolicies = {
+          deleteMany: {},
+          create: createArr,
+        };
+      }
+
+      return await prisma.role
+        .update({
+          where: {
+            id,
+          },
+          data: {
+            ...restData,
+            ...data,
+          },
+        })
+        .catch((err) => {
+          console.log(err);
+          return err;
+        });
     });
   }
 

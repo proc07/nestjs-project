@@ -25,6 +25,7 @@ datasource db {
 // 标记已应用的迁移为已解决，避免在后续迁移中重复应用
 // npx prisma migrate resolve --applied 20251012000005_role
 
+// !!!⚠️ 联合查询字段统一用首字母大写（这里用了首次小写，是不符合 prisma 规范的）
 model User {
   id       Int     @default(autoincrement()) @id
   username String  @unique
@@ -44,6 +45,7 @@ model Role {
   Users    UserRole[]
   // 角色关联的权限
   RolePermissions RolePermissions[]
+  RolePolicies RolePolicy[]
 
   @@map("roles")
 }
@@ -70,6 +72,7 @@ model Permission {
   description   String?
 
   RolePermissions RolePermissions[]
+  PermissionPolicies PermissionPolicy[]
 
   @@map("permissions")
 }
@@ -86,4 +89,52 @@ model RolePermissions {
 
   // 表格名称
   @@map("role_permissions")
+}
+
+model Policy {
+  id       Int       @default(autoincrement()) @id
+  type     Int       // 0: json，1: mongo 2: 函数
+  effect   String       // can cannot
+  action   String    // 权限操作，如：read、write、delete 等
+  subject  String    // 权限作用对象 Class，如：Article、User 等
+  fields   Json?     // 数据库字段
+  conditions Json? // 权限条件，如：({ authorId }) => authorId === user.id
+  args     Json?   // 权限参数，如：['user']
+
+  // base64 编码后的策略内容 (type + effect + action + subject + fields + conditions + args)
+  encode   String   @unique // @db.Text 或 @db.LongText 这样可以存储更长的字符串。
+
+  RolePolicies RolePolicy[]
+  PermissionPolicies PermissionPolicy[]
+
+  @@map("policy")
+}
+
+// Role -> Policy 角色所拥有的策略权限
+model RolePolicy {
+  roleId Int
+  policyId Int
+
+  role      Role    @relation(fields: [roleId], references: [id])
+  policy    Policy  @relation(fields: [policyId], references: [id])
+
+  // 联合主键
+  @@id([roleId, policyId])
+
+  // 表格名称
+  @@map("role_policies")
+}
+
+model PermissionPolicy {
+  permissionId Int
+  policyId Int
+
+  permission  Permission @relation(fields: [permissionId], references: [id])
+  policy    Policy  @relation(fields: [policyId], references: [id])
+
+  // 联合主键
+  @@id([permissionId, policyId])
+
+  // 表格名称
+  @@map("permission_policies")
 }

@@ -1,4 +1,10 @@
-import { Controller, Get, Inject, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Inject,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import { CACHE_MANAGER, CacheInterceptor } from '@nestjs/cache-manager';
@@ -8,6 +14,7 @@ import { User as UserPrisma } from '@prisma/client';
 import { UserService } from './user/user.service';
 
 import { User as UserTypeOrm } from './user/user.entity';
+import { PolicyGuard } from './common/guards/policy.guard';
 
 @Controller()
 // 将 CacheInterceptor 应用于整个 Controller 的所有路由
@@ -44,5 +51,11 @@ export class AppController {
     await this.cacheManager.set('config', { a: 1, b: 2, c: '333' });
     const cacheData = await this.cacheManager.get('config');
     return cacheData as object;
+  }
+
+  @UseGuards(PolicyGuard)
+  @Get('/test')
+  test() {
+    return 'test';
   }
 }
