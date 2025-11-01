@@ -14,6 +14,7 @@ import { RoleModule } from './role/role.module';
 import { PermissionModule } from './permission/permission.module';
 import { PolicyModule } from './policy/policy.module';
 import { SharedModule } from './modules/shared/shared.module';
+import { MenuModule } from './modules/menu/menu.module';
 
 const envFilePath = `.env.${process.env.NODE_ENV || 'development'}`;
 
@@ -80,6 +81,7 @@ const envFilePath = `.env.${process.env.NODE_ENV || 'development'}`;
     PermissionModule,
     PolicyModule,
     SharedModule,
+    MenuModule,
   ],
   controllers: [AppController],
   providers: [],

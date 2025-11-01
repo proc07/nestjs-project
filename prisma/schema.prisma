@@ -102,7 +102,7 @@ model Policy {
   args     Json?   // 权限参数，如：['user']
 
   // base64 编码后的策略内容 (type + effect + action + subject + fields + conditions + args)
-  encode   String   @unique // @db.Text 或 @db.LongText 这样可以存储更长的字符串。
+  encode   String   @unique  @db.VarChar(391)  // @db.Text 或 @db.LongText 这样可以存储更长的字符串。
 
   RolePolicies RolePolicy[]
   PermissionPolicies PermissionPolicy[]
@@ -137,4 +137,41 @@ model PermissionPolicy {
 
   // 表格名称
   @@map("permission_policies")
+}
+
+// 1. menu 表：存储菜单的基本信息，包括菜单的路径、组件、重定向等。
+// 2. meta 表：存储菜单的元数据，包括菜单的名称、图标、排序等。
+model Menu {
+  id   Int        @id @default(autoincrement())
+  name String?    @unique
+  path String
+  component String?
+  redirect  String?
+  fullPath  String?
+  alias     String?
+  label     String?
+
+  // self-relation
+  parentId  Int?
+  parent    Menu? @relation("menu_relation", fields: [parentId], references: [id])
+  children  Menu[] @relation("menu_relation")
+
+  Meta Meta?
+
+  @@map("menus")
+}
+
+model Meta {
+  id  Int @id @default(autoincrement())
+  title String?
+  layout String?
+  order Int? @default(100)
+  icon String?
+  hideMenu  Boolean @default(false)
+  disabled  Boolean @default(false)
+
+  menuId Int @unique
+  Menu Menu @relation(fields: [menuId], references: [id])
+
+  @@map("menu_meta")
 }
