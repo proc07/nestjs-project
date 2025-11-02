@@ -18,7 +18,9 @@ datasource db {
 // 每次创建新的 model 时，都需要运行 prisma db push 命令，才能同步到数据库
 // prisma generate 命令，会根据 schema.prisma 生成 prisma client 代码 （提供的一个用于操作数据库的客户端库）
 
+// 记录下当前数据库的状态，后续可以根据这个状态，回滚到之前的状态 (先导出数据)
 // npx prisma migrate dev --name initial-migration
+// 再导入数据
 
 // 将数据库重置为与迁移历史完全同步的初始状态
 // npx prisma migrate reset
