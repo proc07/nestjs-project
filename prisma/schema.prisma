@@ -46,6 +46,8 @@ model Role {
   // 角色关联的权限
   RolePermissions RolePermissions[]
   RolePolicies RolePolicy[]
+  // 角色关联的菜单
+  RoleMenus RoleMenu[]
 
   @@map("roles")
 }
@@ -157,6 +159,8 @@ model Menu {
   children  Menu[] @relation("menu_relation")
 
   Meta Meta?
+  // 角色关联的菜单
+  RoleMenus RoleMenu[]
 
   @@map("menus")
 }
@@ -174,4 +178,18 @@ model Meta {
   Menu Menu @relation(fields: [menuId], references: [id])
 
   @@map("menu_meta")
+}
+
+model RoleMenu {
+  roleId Int
+  menuId Int
+
+  Role Role @relation(fields: [roleId], references: [id])
+  Menu Menu @relation(fields: [menuId], references: [id])
+
+  // 联合主键
+  @@id([roleId, menuId])
+
+  // 表格名称
+  @@map("role_menus")
 }

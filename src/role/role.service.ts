@@ -14,7 +14,12 @@ export class RoleService {
 
   async create(createRoleDto: CreateRoleDto) {
     return await this.prisma.$transaction(async (prisma) => {
-      const { permissions, policies = [], ...restData } = createRoleDto;
+      const {
+        permissions = [],
+        policies = [],
+        menus = [],
+        ...restData
+      } = createRoleDto;
 
       const rolePermissions = {
         create: permissions.map((permission) => ({
@@ -28,6 +33,21 @@ export class RoleService {
                 ...permission,
               },
             },
+          },
+        })),
+      };
+
+      const roleMenus = {
+        create: menus.map((menu) => ({
+          Menu: {
+            // 不需要创建，直接关联
+            connect: menu?.id
+              ? {
+                  id: menu.id,
+                }
+              : {
+                  name: menu.name,
+                },
           },
         })),
       };
@@ -62,14 +82,17 @@ export class RoleService {
       };
 
       // role -> role_permissions -> permission 表
-      return prisma.role.create({
-        data: {
-          ...restData,
-          RolePermissions: rolePermissions,
-          // warn: 不能将类型“{ create: { policy: { connectOrCreate: { where: Record<string, any>; create: { id?: number; type: null; effect: "can" | "cannot"; action: string; subject: string; fields?: FeildType; conditions?: FeildType; args?: FeildType; }; }; }; }[]; }”分配给类型“RolePolicyUncheckedCreateNestedManyWithoutRoleInput | RolePolicyCreateNestedManyWithoutRoleInput | undefined”。
-          RolePolicies: rolePolicies,
-        },
-      });
+      return prisma.role
+        .create({
+          data: {
+            ...restData,
+            RolePermissions: rolePermissions,
+            // warn: 不能将类型“{ create: { policy: { connectOrCreate: { where: Record<string, any>; create: { id?: number; type: null; effect: "can" | "cannot"; action: string; subject: string; fields?: FeildType; conditions?: FeildType; args?: FeildType; }; }; }; }[]; }”分配给类型“RolePolicyUncheckedCreateNestedManyWithoutRoleInput | RolePolicyCreateNestedManyWithoutRoleInput | undefined”。
+            RolePolicies: rolePolicies,
+            RoleMenus: roleMenus,
+          },
+        })
+        .catch((err) => console.log('创建角色失败', err));
     });
   }
 
@@ -123,7 +146,12 @@ export class RoleService {
 
   async update(id: number, updateRoleDto: UpdateRoleDto): Promise<RolePrisma> {
     return await this.prisma.$transaction(async (prisma) => {
-      const { permissions = [], policies = [], ...restData } = updateRoleDto;
+      const {
+        menus = [],
+        permissions = [],
+        policies = [],
+        ...restData
+      } = updateRoleDto;
       const data: Record<string, any> = {};
 
       if (permissions.length) {
@@ -140,6 +168,24 @@ export class RoleService {
                   ...permission,
                 },
               },
+            },
+          })),
+        };
+      }
+
+      if (menus.length) {
+        data.RoleMenus = {
+          deleteMany: {},
+          create: menus.map((menu) => ({
+            Menu: {
+              // 不需要创建，直接关联
+              connect: menu?.id
+                ? {
+                    id: menu.id,
+                  }
+                : {
+                    name: menu.name,
+                  },
             },
           })),
         };
@@ -210,10 +256,30 @@ export class RoleService {
   }
 
   async remove(id: number): Promise<RolePrisma> {
-    return await this.prisma.role.delete({
-      where: {
-        id,
-      },
+    return this.prisma.$transaction(async (prisma) => {
+      // 先删除角色关联的权限、策略、菜单
+      await prisma.role.update({
+        where: {
+          id,
+        },
+        data: {
+          RolePermissions: {
+            deleteMany: {},
+          },
+          RolePolicies: {
+            deleteMany: {},
+          },
+          RoleMenus: {
+            deleteMany: {},
+          },
+        },
+      });
+      // 最后删除角色
+      return await prisma.role.delete({
+        where: {
+          id,
+        },
+      });
     });
   }
 }

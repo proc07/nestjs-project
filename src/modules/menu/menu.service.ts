@@ -127,26 +127,26 @@ export class MenuService {
         })
         .catch((err) => console.log(err));
 
-      // menu -> children (可能有新增，可能也有del)
-      const menuIds = (await this.collectMenuIds(id)).filter((o) => o !== id);
-      // 为什么要删除 2个表？ 先删除，后创建
+      if (children?.length && children.length > 0) {
+        // menu -> children (可能有新增，可能也有del)
+        const menuIds = (await this.collectMenuIds(id)).filter((o) => o !== id);
+        // 为什么要删除 2个表？ 先删除，后创建
 
-      await prisma.meta.deleteMany({
-        where: {
-          menuId: {
-            in: menuIds,
+        await prisma.meta.deleteMany({
+          where: {
+            menuId: {
+              in: menuIds,
+            },
           },
-        },
-      });
-      await prisma.menu.deleteMany({
-        where: {
-          id: {
-            in: menuIds,
+        });
+        await prisma.menu.deleteMany({
+          where: {
+            id: {
+              in: menuIds,
+            },
           },
-        },
-      });
-      // 判断是否有 children 数据
-      if (children?.length) {
+        });
+        // 判断是否有 children 数据
         await Promise.all(
           children.map(async (item) => {
             return await this.createNested(item, prisma, id);

@@ -1,5 +1,12 @@
 import { Expose, plainToInstance, Transform, Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString, IsArray } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
+import { CreateMenuDto } from 'src/modules/menu/dto/create-menu.dto';
 import { CreatePermissionDto } from 'src/permission/dto/create-permission.dto';
 import { CreatePolicyDto } from 'src/policy/dto/create-policy.dto';
 
@@ -73,4 +80,11 @@ export class CreateRoleDto {
   @IsArray()
   @Type(() => CreatePolicyDto)
   policies: CreatePolicyDto[];
+
+  @Expose()
+  @IsOptional()
+  @IsArray()
+  @Type(() => CreateMenuDto)
+  @ValidateNested({ each: true })
+  menus: CreateMenuDto[];
 }
